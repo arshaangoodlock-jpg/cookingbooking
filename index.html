@@ -1,102 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
   <title>Recipe App</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #fafafa; }
-    h1 { text-align: center; }
-    .search-bar { width: 100%; padding: 10px; margin-bottom: 20px; font-size: 16px; }
-    .recipe-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; }
-    .card { background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-    .card img { width: 100%; border-radius: 8px; }
-    .card h3 { margin: 10px 0 5px; }
-    .footer { font-size: 12px; color: #666; margin-top: 5px; }
-    form { background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-top: 30px; }
-    form input, form textarea { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc; }
-    form button { padding: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    form button:hover { background: #0056b3; }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f7f7f8; color: #111; }
+    h1 { text-align: center; margin-bottom: 20px; }
+    input[type="text"] { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 5px; border: 1px solid #ccc; }
+    .recipe { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    .recipe img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 5px; }
+    .author { font-size: 0.9em; color: #666; margin-top: 8px; }
   </style>
 </head>
 <body>
-  <h1>🍲 Recipe App</h1>
-  <input type="text" id="search" class="search-bar" placeholder="Search recipes..." />
+  <h1>Recipe App (from Google Sheet)</h1>
+  <input type="text" id="search" placeholder="Search recipes..." />
 
-  <div id="recipes" class="recipe-list"></div>
-
-  <form id="addRecipeForm">
-    <h2>Add a Recipe</h2>
-    <input type="text" id="recipeName" placeholder="Recipe name" required />
-    <input type="text" id="recipeAuthor" placeholder="Your name" required />
-    <input type="text" id="recipePhoto" placeholder="Photo URL (optional)" />
-    <textarea id="recipeSteps" placeholder="Steps" required></textarea>
-    <button type="submit">Add Recipe</button>
-  </form>
+  <div id="recipes"></div>
 
   <script>
-    // --- Initial dataset (20 recipes) ---
-    let recipes = JSON.parse(localStorage.getItem("recipes")) || [
-      {id:1, name:"Masala Maggi", author:"Chef A", photoUrl:"https://picsum.photos/300?1", steps:"Boil noodles, add spices."},
-      {id:2, name:"Chocolate Mug Cake", author:"Chef B", photoUrl:"https://picsum.photos/300?2", steps:"Mix flour, sugar, cocoa, microwave."},
-      {id:3, name:"Paneer Butter Masala", author:"Chef C", photoUrl:"https://picsum.photos/300?3", steps:"Cook paneer with butter and spices."},
-      {id:4, name:"Biryani", author:"Chef D", photoUrl:"https://picsum.photos/300?4", steps:"Layer rice and curry, cook slowly."},
-      {id:5, name:"Pasta Alfredo", author:"Chef E", photoUrl:"https://picsum.photos/300?5", steps:"Cook pasta, add creamy sauce."},
-      {id:6, name:"Veggie Pizza", author:"Chef F", photoUrl:"https://picsum.photos/300?6", steps:"Bake dough with sauce and veggies."},
-      {id:7, name:"Pancakes", author:"Chef G", photoUrl:"https://picsum.photos/300?7", steps:"Mix batter, cook on pan."},
-      {id:8, name:"French Fries", author:"Chef H", photoUrl:"https://picsum.photos/300?8", steps:"Fry potatoes until golden."},
-      {id:9, name:"Idli Sambar", author:"Chef I", photoUrl:"https://picsum.photos/300?9", steps:"Steam idlis, serve with sambar."},
-      {id:10, name:"Dosa", author:"Chef J", photoUrl:"https://picsum.photos/300?10", steps:"Spread batter on hot pan, serve with chutney."},
-      {id:11, name:"Tacos", author:"Chef K", photoUrl:"https://picsum.photos/300?11", steps:"Fill tortillas with meat/veggies."},
-      {id:12, name:"Burgers", author:"Chef L", photoUrl:"https://picsum.photos/300?12", steps:"Grill patty, add bun and toppings."},
-      {id:13, name:"Sushi", author:"Chef M", photoUrl:"https://picsum.photos/300?13", steps:"Roll rice with fish and seaweed."},
-      {id:14, name:"Spring Rolls", author:"Chef N", photoUrl:"https://picsum.photos/300?14", steps:"Wrap veggies in sheets and fry."},
-      {id:15, name:"Fried Rice", author:"Chef O", photoUrl:"https://picsum.photos/300?15", steps:"Stir fry rice with veggies and sauce."},
-      {id:16, name:"Shawarma", author:"Chef P", photoUrl:"https://picsum.photos/300?16", steps:"Wrap grilled meat in pita bread."},
-      {id:17, name:"Chole Bhature", author:"Chef Q", photoUrl:"https://picsum.photos/300?17", steps:"Serve spicy chickpeas with fried bread."},
-      {id:18, name:"Falafel", author:"Chef R", photoUrl:"https://picsum.photos/300?18", steps:"Deep fry chickpea balls, serve in pita."},
-      {id:19, name:"Ramen", author:"Chef S", photoUrl:"https://picsum.photos/300?19", steps:"Simmer noodles in broth with toppings."},
-      {id:20, name:"Ice Cream Sundae", author:"Chef T", photoUrl:"https://picsum.photos/300?20", steps:"Scoop ice cream, add toppings."}
-    ];
+    // Replace with your actual values:
+    const SHEET_ID = "1UzJMoquCfgZ_UuiY-F37qPq9AdHhnp81RtfYyduAqjo";
+    const API_KEY = "1UzJMoquCfgZ_UuiY-F37qPq9AdHhnp81RtfYyduAqjo
+"; // Get this from Google Cloud console
 
-    function renderRecipes(filter="") {
-      const container = document.getElementById("recipes");
-      container.innerHTML = "";
-      recipes
-        .filter(r => r.name.toLowerCase().includes(filter.toLowerCase()) || r.author.toLowerCase().includes(filter.toLowerCase()))
-        .forEach(r => {
-          const div = document.createElement("div");
-          div.className = "card";
-          div.innerHTML = `
-            <img src="${r.photoUrl || "https://picsum.photos/300"}" alt="${r.name}" />
-            <h3>${r.name}</h3>
-            <p>${r.steps}</p>
-            <div class="footer">Added by ${r.author}</div>
-          `;
-          container.appendChild(div);
-        });
+    async function loadRecipes() {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1?key=${API_KEY}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        document.getElementById("recipes").innerText = "Failed to load recipes.";
+        return;
+      }
+      const data = await res.json();
+      const rows = data.values || [];
+      const headers = rows[0] || [];
+      const items = rows.slice(1).map(r => ({
+        name: r[0] || "-",
+        ingredients: r[1] || "-",
+        steps: r[2] || "-",
+        author: r[3] || "-",
+        photoUrl: r[4] || ""
+      }));
+      renderRecipes(items);
     }
 
-    document.getElementById("search").addEventListener("input", e => {
-      renderRecipes(e.target.value);
+    function renderRecipes(items) {
+      const filter = document.getElementById("search").value.toLowerCase();
+      const container = document.getElementById("recipes");
+      container.innerHTML = "";
+      items.filter(item =>
+        item.name.toLowerCase().includes(filter) ||
+        item.ingredients.toLowerCase().includes(filter) ||
+        item.author.toLowerCase().includes(filter)
+      ).forEach(item => {
+        const div = document.createElement("div");
+        div.className = "recipe";
+        div.innerHTML = `
+          ${item.photoUrl ? `<img src="${item.photoUrl}" alt="photo">` : ""}
+          <h3>${item.name}</h3>
+          <p><strong>Ingredients:</strong> ${item.ingredients}</p>
+          <p>${item.steps}</p>
+          <div class="author">Added by: ${item.author}</div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    document.getElementById("search").addEventListener("input", () => {
+      loadRecipes(); // re-render on search
     });
 
-    document.getElementById("addRecipeForm").addEventListener("submit", e => {
-      e.preventDefault();
-      const newRecipe = {
-        id: Date.now(),
-        name: document.getElementById("recipeName").value,
-        author: document.getElementById("recipeAuthor").value,
-        photoUrl: document.getElementById("recipePhoto").value,
-        steps: document.getElementById("recipeSteps").value,
-      };
-      recipes.push(newRecipe);
-      localStorage.setItem("recipes", JSON.stringify(recipes));
-      renderRecipes();
-      e.target.reset();
-    });
-
-    renderRecipes();
+    loadRecipes();
   </script>
 </body>
 </html>
